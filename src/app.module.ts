@@ -1,45 +1,45 @@
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { parse } from 'pg-connection-string';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-       
-        if (configService.get('DATABASE_URL')) {
-          const parsed = parse(configService.get('DATABASE_URL')!);
+      inject: [ConfigService],
+      useFactory: (config: ConfigService): TypeOrmModuleOptions => {
+        if (config.get<string>('DATABASE_URL')) {
+          const parsed = parse(config.get<string>('DATABASE_URL')!);
+
           return {
             type: 'postgres' as const,
-            host: parsed.host!,
-            port: parsed.port ? parseInt(parsed.port, 10) : 5432,
-            username: parsed.user!,
-            password: parsed.password!,
-            database: parsed.database!,
-            synchronize: true,          
+            host: parsed.host||undefined,
+            port: parsed.port ? Number(parsed.port) : 5432,
+            username: parsed.user||undefined,
+            password: parsed.password||undefined,
+            database: parsed.database ||undefined,
+            synchronize: true,
             autoLoadEntities: true,
-            ssl: { rejectUnauthorized: false }, 
+            ssl: { rejectUnauthorized: false },
           };
         }
 
         return {
           type: 'postgres' as const,
-          host: configService.get('DB_HOST') || 'localhost',
-          port: parseInt(configService.get('DB_PORT') || '5432', 10),
-          username: configService.get('DB_USERNAME') || 'postgres',
-          password: configService.get('DB_PASSWORD') || 'postgres',
-          database: configService.get('DB') || 'doc1',
+          host: config.get('DB_HOST') || 'localhost',
+          port: Number(config.get('DB_PORT') || '5432'),
+          username: config.get('DB_USERNAME') || 'postgres',
+          password: config.get('DB_PASSWORD') || 'postgres',
+          database: config.get('DB') || 'doc1',
           synchronize: true,
           autoLoadEntities: true,
         };
       },
-      inject: [ConfigService],
     }),
     UserModule,
   ],
