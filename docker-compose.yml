@@ -1,65 +1,12 @@
-
+version: '3.9'
 
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nestjs-doc1-app
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DB_HOST=db
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB=${DB}
-      - DB_PORT=${DB_PORT}
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - nestjs-network
-
-  db:
-    image: postgres:16-alpine
-    container_name: postgres-doc1
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d doc1"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks:
-      - nestjs-network
-
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pgadmin-doc1
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: root
-    ports:
-      - "5050:80"
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - nestjs-network
-
-volumes:
-  postgres_data:
-
-networks:
-  nestjs-network:
-    driver: bridge
